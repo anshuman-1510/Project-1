@@ -1,64 +1,147 @@
-import requests
-from bs4 import BeautifulSoup
-import json
 import re
 
-def scrape_spinny(query, city='delhi'):
-    # Spinny uses a more complex structure, but sometimes we can find JSON in ld+json
-    search_query = query.lower().replace(' ', '-')
-    url = f"https://www.spinny.com/used-cars-in-{(city or 'delhi').lower()}/s/"
-    
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-    
-    cars_list = []
-    try:
-        response = requests.get(url, headers=headers, timeout=10)
-        if response.status_code == 200:
-            soup = BeautifulSoup(response.text, 'html.parser')
-            # Look for Product ld+json
-            scripts = soup.find_all('script', type='application/ld+json')
-            for script in scripts:
-                try:
-                    data = json.loads(script.string)
-                    if isinstance(data, list):
-                        for item in data:
-                            if item.get('@type') == 'Product':
-                                name = item.get('name', '')
-                                if query.lower() in name.lower():
-                                    price = item.get('offers', {}).get('price', 0)
-                                    cars_list.append({
-                                        'title': name,
-                                        'price': int(price) if price else 0,
-                                        'formatted_price': f"₹ {price/100000:.2f} Lakh" if price else "N/A",
-                                        'kms': 'N/A', # Often not in the basic Product LD
-                                        'fuel': 'N/A',
-                                        'year': 'N/A',
-                                        'site': 'Spinny',
-                                        'link': item.get('url', url),
-                                        'image': item.get('image', '')
-                                    })
-                except:
-                    continue
-    except Exception as e:
-        print(f"Error scraping Spinny: {e}")
-        
-    if not cars_list:
-        # Fallback to demo data if scraping is blocked or unsuccessful
-        for i in range(1, 4):
-            year = 2021 - i
-            price = 450000 + (i * 20000)
-            cars_list.append({
-                'title': f'{year} {query.capitalize()} LXI (Demo)',
-                'price': price,
-                'formatted_price': f'₹ {price/100000:.2f} Lakh',
-                'kms': f'{30000 + (i*10000):,}',
-                'fuel': 'Petrol',
-                'year': year,
-                'site': 'Spinny',
-                'link': url,
-                'image': 'https://spn-mda.spinny.com/img/C9vkkMJkRBqG1BUXCKg6Jg/raw/file.jpeg'
-            })
-    
-    return cars_list
+import requests
+from bs4 import BeautifulSoup
+
+
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/124.0.0.0 Safari/537.36"
+    )
+}
+
+CITY_ALIASES = {
+    "new-delhi": "delhi",
+    "delhi-ncr": "delhi",
+    "gurugram": "gurgaon",
+}
+
+CHROME_BINARY = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+DEFAULT_IMAGE = "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=1200&q=80"
+
+
+def _normalize_city(city):
+    city_slug = (city or "delhi").strip().lower().replace(" ", "-")
+    return CITY_ALIASES.get(city_slug, city_slug)
+
+
+def _slugify(value):
+    return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-")
+
+
+def _normalize_tokens(value):
+    return re.sub(r"[^a-z0-9]+", " ", value.lower()).split()
+
+
+def _matches_query(title, query):
+    query_tokens = _normalize_tokens(query)
+    title_tokens = _normalize_tokens(title)
+    return bool(query_tokens) and all(token in title_tokens for token in query_tokens)
+
+
+def _extract_kms(text):
+    match = re.search(r"(\d+(?:\.\d+)?)\s*K\s*km", text, re.IGNORECASE)
+    if match:
+        return f"{int(float(match.group(1)) * 1000):,} km"
+
+    match = re.search(r"(\d[\d,]*)\s*km", text, re.IGNORECASE)
+    if match:
+        return f"{int(match.group(1).replace(',', '')):,} km"
+
+    return "N/A"
+
+
+def _extract_image(node):
+    image = node.find("img")
+    if not image:
+        return DEFAULT_IMAGE
+    return (
+        image.get("src")
+        or image.get("data-src")
+        or image.get("srcset", "").split(" ")[0]
+        or DEFAULT_IMAGE
+    )
+
+
+def _extract_from_anchor(anchor):
+    href = anchor.get("href", "").strip()
+    title = " ".join(anchor.stripped_strings).strip()
+
+    if not href.startswith("/buy-used-cars/"):
+        return None
+    if not re.match(r"^\d{4}\s", title):
+        return None
+    if len(title) > 70:
+        return None
+
+    card = anchor
+    for _ in range(8):
+        if card is None:
+            break
+        text = " ".join(card.stripped_strings)
+        if "Lakh" in text and "km" in text.lower():
+            price_match = re.search(r"(\d+(?:\.\d+)?)\s*Lakh", text, re.IGNORECASE)
+            fuel_match = re.search(r"\b(petrol|diesel|cng|electric|hybrid)\b", text, re.IGNORECASE)
+            if not price_match:
+                break
+            year = title.split(" ", 1)[0]
+            return {
+                "title": title,
+                "price": int(float(price_match.group(1)) * 100000),
+                "formatted_price": f"₹ {float(price_match.group(1)):.2f} Lakh",
+                "kms": _extract_kms(text),
+                "fuel": fuel_match.group(1).title() if fuel_match else "N/A",
+                "year": year,
+                "site": "Spinny",
+                "link": f"https://www.spinny.com{href}",
+                "image": _extract_image(card),
+            }
+        card = card.parent
+
+    return None
+
+
+def scrape_spinny(query, city="delhi"):
+    city_slug = _normalize_city(city)
+    query_slug = _slugify(query)
+    urls = [
+        f"https://www.spinny.com/used-{query_slug}-cars-in-{city_slug}/s/",
+        f"https://www.spinny.com/used-cars-in-{city_slug}/s/",
+    ]
+
+    results = []
+    seen = set()
+
+    for url in urls:
+        try:
+            response = requests.get(url, headers=HEADERS, timeout=8)
+            response.raise_for_status()
+            html = response.text
+        except Exception as e:
+            print(f"Error scraping Spinny from {url}: {e}")
+            html = ""
+
+        if not html:
+            continue
+
+        soup = BeautifulSoup(html, "html.parser")
+        for anchor in soup.find_all("a", href=re.compile(r"^/buy-used-cars/")):
+            listing = _extract_from_anchor(anchor)
+            if not listing:
+                continue
+            if not _matches_query(listing["title"], query):
+                continue
+
+            dedupe_key = listing["link"]
+            if dedupe_key in seen:
+                continue
+
+            seen.add(dedupe_key)
+            results.append(listing)
+
+            if len(results) >= 6:
+                return results
+
+    return results

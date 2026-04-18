@@ -130,3 +130,152 @@ body {
     background: white;
     margin-bottom: 20px;
 }
+
+.quick-links-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.2rem;
+}
+
+.comparison-summary {
+    border-radius: 18px;
+}
+
+.summary-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+}
+
+.comparison-total {
+    min-width: 120px;
+    text-align: center;
+    background: linear-gradient(135deg, #eef6ff, #ffffff);
+    border: 1px solid rgba(52, 152, 219, 0.18);
+    border-radius: 18px;
+    padding: 14px 18px;
+}
+
+.comparison-total span {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1;
+}
+
+.comparison-total small {
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.source-pill {
+    height: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    border-radius: 16px;
+    padding: 16px 18px;
+    color: #1f2933;
+}
+
+.source-pill strong,
+.source-pill small,
+.source-pill span {
+    display: block;
+}
+
+.source-pill small {
+    color: #5f6c7b;
+}
+
+.source-pill span {
+    font-size: 1.8rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.source-cardekho {
+    background: #fff1f0;
+    border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.source-cars24 {
+    background: #eefbff;
+    border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.source-spinny {
+    background: #eef3ff;
+    border: 1px solid rgba(44, 62, 80, 0.16);
+}
+
+.listing-tile {
+    background: white;
+    border: 1px solid rgba(44, 62, 80, 0.08);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(44, 62, 80, 0.08);
+}
+
+.listing-image {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    display: block;
+    background: #edf2f7;
+}
+
+.listing-body {
+    padding: 18px;
+}
+
+.listing-title {
+    font-size: 1.05rem;
+    line-height: 1.35;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.copyright-link {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    color: white;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-weight: 600;
+    transition: all 0.25s ease;
+}
+
+.copyright-link:hover {
+    background: white;
+    color: var(--primary-color);
+}
+
+.legal-modal {
+    border: 0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.legal-modal .modal-body {
+    padding-bottom: 28px;
+}
+
+.legal-modal p {
+    color: #495057;
+    line-height: 1.75;
+}
+
+.legal-kicker {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--secondary-color);
+}

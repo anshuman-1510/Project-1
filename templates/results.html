@@ -27,6 +27,17 @@
             <div class="col-md-8">
                 <h1 class="fw-bold">Results for "{{ query }}"</h1>
                 <p class="text-muted">Showing the best matches from CarDekho, Cars24, and Spinny</p>
+                <div class="quick-links-row">
+                    <span class="text-muted me-2">Try also:</span>
+                    <a href="#" class="quick-link me-2" onclick="fillSearch('Swift')">Swift</a>
+                    <a href="#" class="quick-link me-2" onclick="fillSearch('Creta')">Creta</a>
+                    <a href="#" class="quick-link me-2" onclick="fillSearch('Baleno')">Baleno</a>
+                    <a href="#" class="quick-link me-2" onclick="fillSearch('Nexon')">Nexon</a>
+                    <a href="#" class="quick-link me-2" onclick="fillSearch('Amaze')">Amaze</a>
+                    <a href="#" class="quick-link me-2" onclick="fillSearch('Seltos')">Seltos</a>
+                    <a href="#" class="quick-link me-2" onclick="fillSearch('Venue')">Venue</a>
+                    <a href="#" class="quick-link me-2" onclick="fillSearch('Thar')">Thar</a>
+                </div>
             </div>
             <div class="col-md-4 text-md-end">
                 <a href="/" class="btn btn-outline-secondary">
@@ -35,12 +46,64 @@
             </div>
         </div>
 
+        <div class="card border-0 shadow-sm mb-4 comparison-summary">
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap justify-content-between align-items-start gap-3">
+                    <div>
+                        <p class="summary-kicker mb-1">Comparison Status</p>
+                        <h4 class="fw-bold mb-2">Live matches by source</h4>
+                        <p class="text-muted mb-0">
+                            {% if source_summary.CarDekho + source_summary.Cars24 + source_summary.Spinny > 1 %}
+                            Your best value card is based on comparing matches from the sources listed below.
+                            {% else %}
+                            Your current best value may be based on a single source because the other platforms returned no matching live listings.
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="comparison-total">
+                        <span>{{ results|length }}</span>
+                        <small>Total matches</small>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-1">
+                    <div class="col-md-4">
+                        <div class="source-pill source-cardekho">
+                            <div>
+                                <strong>CarDekho</strong>
+                                <small>{{ 'Live matches found' if source_summary.CarDekho else 'No matching live listings' }}</small>
+                            </div>
+                            <span>{{ source_summary.CarDekho }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="source-pill source-cars24">
+                            <div>
+                                <strong>Cars24</strong>
+                                <small>{{ 'Live matches found' if source_summary.Cars24 else 'No matching live listings' }}</small>
+                            </div>
+                            <span>{{ source_summary.Cars24 }}</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="source-pill source-spinny">
+                            <div>
+                                <strong>Spinny</strong>
+                                <small>{{ 'Live matches found' if source_summary.Spinny else 'No matching live listings' }}</small>
+                            </div>
+                            <span>{{ source_summary.Spinny }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         {% if best_choice %}
         <div class="card border-0 shadow-lg mb-5 car-card">
             <div class="row g-0">
                 <div class="col-md-4">
                     <div class="position-relative h-100">
-                        <img src="{{ best_choice.image }}" class="img-fluid rounded-start h-100 w-100" style="object-fit: cover;" alt="{{ best_choice.title }}">
+                        <img src="{{ best_choice.image or default_car_image }}" class="img-fluid rounded-start h-100 w-100" style="object-fit: cover;" alt="{{ best_choice.title }}">
                         <div class="position-absolute top-0 start-0 m-3">
                             <span class="badge badge-best"><i class="fas fa-star me-1"></i> BEST VALUE</span>
                         </div>
@@ -74,80 +137,61 @@
         </div>
         {% endif %}
 
+        {% if not results %}
+        <div class="alert alert-warning border-0 shadow-sm mb-4">
+            <strong>No matching live listings found.</strong> Try another model or check again later if one of the source sites is temporarily unavailable.
+        </div>
+        {% endif %}
+
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-white py-3">
                 <h4 class="mb-0 fw-bold">All Available Listings</h4>
             </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4">Vehicle Details</th>
-                                <th>Price</th>
-                                <th>Specs</th>
-                                <th>Source</th>
-                                <th class="text-center pe-4">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for car in results %}
-                            <tr>
-                                <td class="ps-4 py-3">
-                                    <div class="d-flex align-items-center">
-                                        <img src="{{ car.image }}" width="100" class="rounded shadow-sm me-3" alt="car">
-                                        <div>
-                                            <h6 class="mb-0 fw-bold">{{ car.title }}</h6>
-                                            <small class="text-muted">{{ car.year }} Model</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
+            <div class="card-body p-4">
+                <div class="row g-4">
+                    {% for car in results %}
+                    <div class="col-md-6 col-xl-4">
+                        <div class="listing-tile h-100">
+                            <img src="{{ car.image or default_car_image }}" class="listing-image" alt="{{ car.title }}">
+                            <div class="listing-body">
+                                <div class="d-flex justify-content-between align-items-start gap-3 mb-2">
+                                    <h5 class="listing-title mb-0">{{ car.title }}</h5>
                                     <span class="price-tag">{{ car.formatted_price }}</span>
-                                </td>
-                                <td>
-                                    <div class="small">
-                                        <div><i class="fas fa-tachometer-alt me-2 text-muted"></i>{{ car.kms }}</div>
-                                        <div><i class="fas fa-gas-pump me-2 text-muted"></i>{{ car.fuel }}</div>
-                                    </div>
-                                </td>
-                                <td>
+                                </div>
+                                <p class="text-muted mb-3">{{ car.year }} Model</p>
+                                <div class="small mb-3">
+                                    <div><i class="fas fa-tachometer-alt me-2 text-muted"></i>{{ car.kms }}</div>
+                                    <div><i class="fas fa-gas-pump me-2 text-muted"></i>{{ car.fuel }}</div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center gap-2">
                                     <span class="badge 
                                         {% if car.site == 'CarDekho' %}bg-danger
                                         {% elif car.site == 'Cars24' %}bg-info text-dark
                                         {% else %}bg-primary{% endif %}">
                                         {{ car.site }}
                                     </span>
-                                </td>
-                                <td class="text-center pe-4">
                                     <a href="{{ car.link }}" target="_blank" class="btn btn-sm btn-outline-primary px-3">
-                                        View <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8rem;"></i>
+                                        View Deal <i class="fas fa-external-link-alt ms-1" style="font-size: 0.8rem;"></i>
                                     </a>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Footer -->
-    <footer class="footer">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h4>CarCompare India</h4>
-                    <p>Comparing prices across top platforms to find you the best deal.</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <p>&copy; 2026 CarCompare. Built with Python & Flask.</p>
-                </div>
-            </div>
-        </div>
-    </footer>
+    {% include '_footer.html' %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function fillSearch(val) {
+            document.querySelector('input[name="car_name"]').value = val;
+            document.querySelector('form[action="/search"]').submit();
+        }
+    </script>
 </body>
 </html>

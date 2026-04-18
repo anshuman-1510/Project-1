@@ -38,23 +38,5 @@ def scrape_cardekho(query, city='new-delhi'):
                             })
     except Exception as e:
         print(f"Error scraping CarDekho: {e}")
-        
-    # Return mock data if nothing found to ensure the UI works for the user
-    if not cars_list:
-        # Generate more diverse demo results
-        for i in range(1, 4):
-            year = 2023 - i
-            price = 500000 + (i * 50000)
-            cars_list.append({
-                'title': f'{year} {query.capitalize()} ZXI',
-                'price': price,
-                'formatted_price': f'₹ {price/100000:.2f} Lakh',
-                'kms': f'{20000 + (i*5000):,}',
-                'fuel': 'Petrol',
-                'year': year,
-                'site': 'CarDekho',
-                'link': '#',
-                'image': 'https://stimg.cardekho.com/images/car-images/large/Maruti/Swift/12431/1762776141359/front-left-side-47.jpg'
-            })
-        
+
     return cars_list
